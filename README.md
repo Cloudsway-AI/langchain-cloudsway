@@ -19,7 +19,7 @@ export CLOUDSWAY_SERVER_KEY="your-endpoint-accesskey"
 The value should be in the format:  
 `endpoint-accesskey` 
  
-To get your token and subscribe to a plan, please register at [console.cloudsway.ai](console.cloudsway.ai).
+To get your token and subscribe to a plan, please register at [console.cloudsway.ai](https://console.cloudsway.ai/).
 
 ## Tool
 
