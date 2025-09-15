@@ -23,7 +23,8 @@ class TestSmartsearchToolUnit(ToolsUnitTests):
         have {"name", "id", "args"} keys.
         """
         return {
-            "query": "2024 global AI summit highlights",
+            "query": "cloudsway.ai",
             "count": 2,
-            "setLang": "en"
+            "setLang": "en",
+            "freshness": "Month",
         }

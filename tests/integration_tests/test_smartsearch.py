@@ -20,7 +20,8 @@ class TestSmartsearchToolIntegration(ToolsIntegrationTests):
         Returns a dictionary representing the "args" of an example tool call.
         """
         return {
-            "query": "2024 global AI summit highlights",
+            "query": "cloudsway.ai",
             "count": 2,
-            "setLang": "en"
+            "setLang": "en",
+            "freshness": "Month",
         }

@@ -12,7 +12,8 @@ class SmartsearchToolInput(BaseModel):
     count: Optional[int] = Field(10, description="Number of results to return (1-50, recommended 3-10).")
     offset: Optional[int] = Field(0, description="Pagination offset (e.g., offset=10 means start from result #11).")
     setLang: Optional[str] = Field("en", description="Language filter (e.g., 'zh-CN', 'en', 'ja').")
-    safeSearch: Optional[str] = Field("Strict", description="Content safety level: 'Strict', 'Moderate', or 'Off'.")
+    freshness: Optional[str] = Field(None, description="Filter by time period: 'Day', 'Week', 'Month', or date range like '2023-02-01..2023-05-30'.")
+    sites: Optional[str] = Field(None, description="Host address to filter results from a specific website (e.g., 'baijiahao.baidu.com').")
 
 class SmartsearchTool(BaseTool):
     """Cloudsway Smartsearch tool for LangChain.
@@ -45,7 +46,8 @@ class SmartsearchTool(BaseTool):
         count: int = 10,
         offset: int = 0,
         setLang: str = "en",
-        safeSearch: str = "Strict",
+        freshness: Optional[str] = None,
+        sites: Optional[str] = None,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
         server_key = self._get_api_key()
@@ -57,9 +59,12 @@ class SmartsearchTool(BaseTool):
             'q': query,
             'count': count,
             'offset': offset,
-            'mkt': setLang,
-            'safeSearch': safeSearch
+            'setLang': setLang,  # Changed from 'mkt' to match new doc
         }
+        if freshness:
+            params['freshness'] = freshness
+        if sites:
+            params['sites'] = sites
         headers = {
             'Authorization': f'Bearer {api_key}',
             'pragma': 'no-cache',
