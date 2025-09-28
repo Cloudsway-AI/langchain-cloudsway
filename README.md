@@ -13,13 +13,17 @@ pip install -U langchain-cloudsway
 Set your Cloudsway API credentials as an environment variable:
 
 ```bash
-export CLOUDSWAY_SERVER_KEY="your-endpoint-accesskey"
+# POSIX / Git Bash
+export CLOUDSWAY_SERVER_KEY="endpoint-accesskey"
+
+# Windows (cmd.exe)
+set CLOUDSWAY_SERVER_KEY=endpoint-accesskey
 ```
 
-The value should be in the format:  
-`endpoint-accesskey` 
- 
-To get your token and subscribe to a plan, please register at [console.cloudsway.ai](https://console.cloudsway.ai/).
+The value should be in the format:
+`endpoint-accesskey`
+
+To get your token and subscribe to a plan, please register at https://console.cloudsway.ai/.
 
 ## Tool
 
@@ -34,101 +38,106 @@ tool = SmartsearchTool()
 result = tool.invoke({
     "query": "cloudsway.ai",
     "count": 5,
-    "setLang": "en"
+    "setLang": "en",
 })
 print(result)
 ```
 
 ### Available Parameters
 
-The SmartsearchTool supports the following parameters:
+Notes:
+- Query should not be empty. Recommended max length: 100 characters.
+- count default: 10, valid range: 1–100.
+- setLang supports 2- or 4-letter ISO codes. Default behavior is automatic language detection if not provided.
+- mainText will only be returned when enableContent is true.
+- safeSearch controls adult-content filtering. Allowed values: Off, Moderate, Strict.
 
-| Parameter | Required | Type | Description |
-|-----------|----------|------|-------------|
-| query (q) | Yes | String | The search query string. Cannot be empty. |
-| count | No | Short | Number of search results to return. Default: 10, Maximum: 50. Accepted values: 10, 20, 30, 40, 50. |
-| freshness | No | String | Filter results by time period: "Day", "Week", "Month", or a date range like "2023-02-01..2023-05-30". |
-| offset | No | Short | Zero-based offset indicating how many results to skip. Default: 0. |
-| setLang | No | String | Language code for results (recommended to use 4-letter codes like "en-US"). Default: "en". |
-| sites | No | String | Host address to filter results from a specific website (e.g., "baijiahao.baidu.com"). |
+| Parameter    | Required | Type    | Description |
+|--------------|----------|---------|-------------|
+| q / query    | Yes      | String  | Search query string. Cannot be empty. (Recommended ≤ 100 chars) |
+| count        | No       | Integer | Number of results to return. Default: 10. Range: 1–100. |
+| offset       | No       | Integer | Zero-based result offset. Default: 0 (start position). |
+| freshness    | No       | String  | Time filter for results. Allowed values: Day, Week, Month. Default: no time filter. |
+| setLang      | No       | String  | UI language code (ISO 639-1 or ISO 639-1 + '-' + ISO 3166). Default: auto detect. |
+| sites        | No       | String  | Host address filter (e.g., `baijiahao.baidu.com`). |
+| enableContent| No       | Boolean | Whether to return full content. Default: false. Must be true to return mainText. |
+| mainText     | No       | Boolean | Whether to return long summary (mainText). Requires `enableContent=true`. Default: false. |
+| safeSearch   | No       | String  | Adult-content filter. One of: `Off`, `Moderate`, `Strict`. Default: not set (server default). |
+
 
 ### Advanced Usage Examples
 
 ```python
-# Search with freshness filter
+# Search with freshness and explicit language
 result = tool.invoke({
     "query": "latest AI research",
     "count": 20,
-    "freshness": "Week", 
+    "freshness": "Week",
     "setLang": "en-US"
 })
 
-# Search within a specific site
+# Search within a specific site and fetch full content + mainText
 result = tool.invoke({
     "query": "machine learning tutorial",
-    "sites": "github.com"
+    "sites": "github.com",
+    "enableContent": True,
+    "mainText": True,
 })
 
 # Paginated search
 result = tool.invoke({
     "query": "climate change",
     "count": 10,
-    "offset": 10  # Get second page of results
+    "offset": 10  # get next page of results
 })
 ```
 
 ## Response Structure
 
-The API returns a JSON response with the following structure:
+The API returns JSON similar to:
 
 ```json
 {
-    "queryContext": {
-        "originalQuery": "your search query"
-    },
-    "webPages": {
-        "value": [
-            {
-                "name": "Page Title",
-                "url": "https://example.com/page",
-                "displayUrl": "https://example.com/page",
-                "snippet": "Description of the page content...",
-                "datePublished": "2025-07-14T00:00:00.0000000",
-                "dateLastCrawled": "2025-07-15T02:48:00.0000000Z",
-                "siteName": "Example Website",
-                "thumbnailUrl": "https://example.com/thumbnail.jpg",
-                "score": 0.95
-            },
-            // Additional results...
-        ]
-    }
+  "queryContext": {
+    "originalQuery": "your search query"
+  },
+  "webPages": {
+    "value": [
+      {
+        "name": "Page Title",
+        "snippet": "Short description... (first 200 characters)",
+        "url": "https://example.com/page",
+        "displayUrl": "example.com/page",
+        "thumbnailUrl": "https://example.com/thumbnail.jpg",
+        "datePublished": "2025-07-14T00:00:00.0000000",
+        "datePublishedDisplayText": "Jul 14, 2025",
+        "dateLastCrawled": "2025-07-15T02:48:00.0000000Z",
+        "siteName": "Example Website",
+        "score": 0.95,
+        "mainText": "Longer extracted summary or main content (present when enableContent=true and mainText=true)"
+      }
+    ]
+  }
 }
 ```
 
-### Response Fields
+### Response Field Notes
 
-- **queryContext**: Contains information about the search query
-  - **originalQuery**: The search term used in the request
-
-- **webPages.value**: Array of search result objects, each containing:
-  - **name**: Title of the webpage
-  - **url**: URL of the webpage
-  - **displayUrl**: URL displayed for the result
-  - **snippet**: Brief description of the webpage content
-  - **datePublished**: Publication date (when available)
-  - **dateLastCrawled**: Date when the page was last indexed
-  - **siteName**: Name of the website (when available)
-  - **thumbnailUrl**: URL to thumbnail image (when available)
-  - **score**: Relevance score (when available)
+- queryContext.originalQuery: Original search term.
+- webPages.value: Array of search results.
+- Each WebPage may include:
+  - name, url, displayUrl, snippet
+  - datePublished, dateLastCrawled (when available)
+  - siteName, thumbnailUrl, score
+  - mainText: long summary (only present when enabled)
 
 ## Error Handling
 
-The API may return the following status codes:
+Common status codes:
+- 200: Success
+- 429: Rate limit exceeded (QPS limit). Contact Cloudsway support for higher QPS.
 
-- **200**: Successful request
-- **429**: Rate limit exceeded (QPS limit reached)
-
-For higher QPS limits, please contact Cloudsway support.
+If you encounter any problems, reach out to info@cloudsway.com.
 
 ## License
 
